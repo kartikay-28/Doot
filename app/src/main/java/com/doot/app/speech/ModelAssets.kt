@@ -12,18 +12,18 @@ object ModelAssets {
         val baseDir = File(context.filesDir, "models/$lang")
         if (!baseDir.exists() || !baseDir.isDirectory) return false
 
-        // Check for essential files to verify successful extraction
-        val requiredFiles = listOf(
-            "encoder.onnx",
-            "decoder.onnx",
-            "tokens.txt",
-            "tts.onnx",
-            "tts_tokens.txt"
-        )
-        for (f in requiredFiles) {
-            if (!File(baseDir, f).exists()) return false
-        }
-        return true
+        // Check for essential ASR files
+        val hasAsr = File(baseDir, "encoder.onnx").exists() &&
+                     File(baseDir, "decoder.onnx").exists() &&
+                     File(baseDir, "tokens.txt").exists()
+
+        if (!hasAsr) return false
+
+        // Check for either Kokoro or VITS TTS
+        val hasKokoro = File(baseDir, "model.onnx").exists() && File(baseDir, "voices.bin").exists()
+        val hasVits = File(baseDir, "tts.onnx").exists() && File(baseDir, "tts_tokens.txt").exists()
+
+        return hasKokoro || hasVits
     }
 
     fun isAnyLanguageInstalled(context: Context): Boolean {

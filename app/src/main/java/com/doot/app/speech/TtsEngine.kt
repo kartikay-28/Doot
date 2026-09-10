@@ -5,7 +5,9 @@ import android.util.Log
 import com.k2fsa.sherpa.onnx.OfflineTts
 import com.k2fsa.sherpa.onnx.OfflineTtsConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
+import com.k2fsa.sherpa.onnx.OfflineTtsKokoroModelConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -20,23 +22,43 @@ class TtsEngine(private val context: Context) {
 
         release()
 
-        val model = ModelAssets.getModelPath(context, "$lang/tts.onnx")
-        val lexicon = ""
-        val tokens = ModelAssets.getModelPath(context, "$lang/tts_tokens.txt")
-        val dataDir = ModelAssets.getModelPath(context, "$lang/espeak-ng-data")
+        val kokoroModelPath = ModelAssets.getModelPath(context, "$lang/model.onnx")
+        val kokoroVoicesPath = ModelAssets.getModelPath(context, "$lang/voices.bin")
+        val isKokoro = File(kokoroModelPath).exists() && File(kokoroVoicesPath).exists()
 
-        val config = OfflineTtsConfig(
-            model = OfflineTtsModelConfig(
-                vits = OfflineTtsVitsModelConfig(
-                    model = model,
-                    lexicon = lexicon,
-                    tokens = tokens,
-                    dataDir = dataDir
-                ),
-                numThreads = 4,
-                debug = true
+        val config = if (isKokoro) {
+            val tokens = ModelAssets.getModelPath(context, "$lang/tokens.txt")
+            val dataDir = ModelAssets.getModelPath(context, "$lang/espeak-ng-data")
+            OfflineTtsConfig(
+                model = OfflineTtsModelConfig(
+                    kokoro = OfflineTtsKokoroModelConfig(
+                        model = kokoroModelPath,
+                        voices = kokoroVoicesPath,
+                        tokens = tokens,
+                        dataDir = dataDir
+                    ),
+                    numThreads = 4,
+                    debug = true
+                )
             )
-        )
+        } else {
+            val model = ModelAssets.getModelPath(context, "$lang/tts.onnx")
+            val lexicon = ""
+            val tokens = ModelAssets.getModelPath(context, "$lang/tts_tokens.txt")
+            val dataDir = ModelAssets.getModelPath(context, "$lang/espeak-ng-data")
+            OfflineTtsConfig(
+                model = OfflineTtsModelConfig(
+                    vits = OfflineTtsVitsModelConfig(
+                        model = model,
+                        lexicon = lexicon,
+                        tokens = tokens,
+                        dataDir = dataDir
+                    ),
+                    numThreads = 4,
+                    debug = true
+                )
+            )
+        }
 
         try {
             tts = OfflineTts(

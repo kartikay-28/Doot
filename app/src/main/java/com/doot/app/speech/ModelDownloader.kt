@@ -23,16 +23,29 @@ sealed class DownloadState {
 }
 
 class ModelDownloader(private val context: Context) {
+    companion object {
+        // Upgraded High-Accuracy Models
+        val UPGRADED_ASR_WHISPER_BASE = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-base.tar.bz2"
+        val UPGRADED_TTS_KOKORO_EN = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-en-v0_19.tar.bz2"
+        val UPGRADED_TTS_HINDI_FEMALE = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-hi_IN-priyamvada-medium.tar.bz2"
+
+        // Baseline (V1) Models for instant rollback if needed
+        val BASELINE_ASR_EN_ZIPFORMER = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-zipformer-en-2023-06-26.tar.bz2"
+        val BASELINE_ASR_WHISPER_TINY = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2"
+        val BASELINE_TTS_EN_AMY = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-amy-low.tar.bz2"
+        val BASELINE_TTS_HI_ROHAN = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-hi_IN-rohan-medium.tar.bz2"
+    }
+
     private val asrLinks = mapOf(
-        "en" to "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-zipformer-en-2023-06-26.tar.bz2",
-        "hi" to "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2",
-        "pa" to "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2" 
+        "en" to UPGRADED_ASR_WHISPER_BASE,
+        "hi" to UPGRADED_ASR_WHISPER_BASE,
+        "pa" to UPGRADED_ASR_WHISPER_BASE
     )
 
     private val ttsLinks = mapOf(
-        "en" to "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-amy-low.tar.bz2",
-        "hi" to "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-hi_IN-rohan-medium.tar.bz2",
-        "pa" to "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-hi_IN-rohan-medium.tar.bz2"
+        "en" to UPGRADED_TTS_KOKORO_EN,
+        "hi" to UPGRADED_TTS_HINDI_FEMALE,
+        "pa" to UPGRADED_TTS_HINDI_FEMALE
     )
 
     fun downloadLanguage(lang: String): Flow<DownloadState> = flow {
@@ -137,6 +150,11 @@ class ModelDownloader(private val context: Context) {
                                     } else {
                                         val name = entry.name.substringAfterLast("/")
                                         when {
+                                            // Kokoro files
+                                            name == "voices.bin" -> "voices.bin"
+                                            name.contains("model") && name.endsWith(".onnx") -> "model.onnx"
+                                            entry.name.contains("kokoro") && name.endsWith("tokens.txt") -> "tokens.txt"
+                                            // VITS files
                                             name.endsWith(".onnx") -> "tts.onnx"
                                             name.endsWith("tokens.txt") -> "tts_tokens.txt"
                                             else -> null

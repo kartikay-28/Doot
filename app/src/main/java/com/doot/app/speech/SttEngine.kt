@@ -2,6 +2,7 @@ package com.doot.app.speech
 
 import android.content.Context
 import android.util.Log
+import java.io.File
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
 import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig
 import com.k2fsa.sherpa.onnx.OfflineTransducerModelConfig
@@ -18,10 +19,16 @@ class SttEngine(private val context: Context) {
 
         release()
 
-        val tokens = ModelAssets.getModelPath(context, "$lang/tokens.txt")
-        val encoder = ModelAssets.getModelPath(context, "$lang/encoder.onnx")
-        val decoder = ModelAssets.getModelPath(context, "$lang/decoder.onnx")
-        val joinerPath = ModelAssets.getModelPath(context, "$lang/joiner.onnx")
+        val baseLang = when {
+            File(ModelAssets.getModelPath(context, "$lang/encoder.onnx")).exists() -> lang
+            File(ModelAssets.getModelPath(context, "en/encoder.onnx")).exists() -> "en"
+            else -> lang
+        }
+
+        val tokens = ModelAssets.getModelPath(context, "$baseLang/tokens.txt")
+        val encoder = ModelAssets.getModelPath(context, "$baseLang/encoder.onnx")
+        val decoder = ModelAssets.getModelPath(context, "$baseLang/decoder.onnx")
+        val joinerPath = ModelAssets.getModelPath(context, "$baseLang/joiner.onnx")
         val joinerFile = java.io.File(joinerPath)
 
         val modelConfig = if (joinerFile.exists()) {
