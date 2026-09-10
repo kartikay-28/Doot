@@ -1,0 +1,19 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Built application files
+*.apk
+*.aab
+
+# Model binaries (too large for GitHub > 100MB; downloaded via setup_models.ps1 or ModelDownloader.kt)
+app/src/main/assets/models/
+*.onnx
+*.tar.bz2
